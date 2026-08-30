@@ -161,44 +161,61 @@ Ableton-ish, thin value arcs, dark well. Changes to make:
 - A "this throw is barely doing anything" hint, since Subtle at low Amount can
   produce a genuinely inaudible throw and that reads as a bug.
 
-## 7. Suggested order of work
+## 7. Decided
 
-1. Locks (4.1) — changes the workflow more than anything else on the list
+Settled 2026-08-30. The rest of this document is written as if these hold.
+
+| Decision | Answer |
+|---|---|
+| What to build next | **Per-module locks.** Before anything else, because they change the state format and the strip layout and only get more expensive later. |
+| Wide or deep | **Wide.** More modules, not multiband. Multiband stays on the list but behind the module set. |
+| Time-domain modules | **In scope, all of them** — Reverse, Repeat/stutter and varispeed. |
+| Mix | **Parallel dry/wet plus a wet-solo mode**, for layering the mangled version under the original. |
+
+The consequences worth writing down:
+
+- **Locks come first**, so the recipe generator needs to take a regenerate mask
+  from the start rather than always producing a whole recipe. Cheap now,
+  invasive later.
+- **Varispeed is in**, which means the plugin will change *when* things happen.
+  That is a real interaction with Ableton's warping and it needs testing against
+  a warped clip early, not at the end — if it fights the host, the module has to
+  be grid-quantised rather than free.
+- **Multiband is deferred, not dropped.** Every module added between now and
+  then should keep its processing in one place per band-able stage, so the
+  retrofit is a band loop rather than a rewrite of five modules.
+- **Wet-solo means the dry path needs latency compensation** the moment Reverse
+  or anything else with lookahead lands, because a dry-killed output has nothing
+  to hide misalignment behind.
+
+## 8. Suggested order of work
+
+1. Locks (4.1), including the regenerate mask in the generator
 2. Throw history (4.2)
-3. Reverse + Repeat modules (4.3) — the two that most defeat source recognition
-4. Character retuning by ear (4.6)
-5. Drive loudness matching, crush anti-aliasing switch (4.6)
-6. Formant module, reusing KloudFormant (4.3)
-7. Multiband **or** more modules — the fork in question 3
-8. Transient triggering (4.5)
-9. pluginval, notarisation, first tagged release
+3. Reverse + Repeat (4.3) — grid-locked, buffer-based
+4. Wet-solo mode for Mix (5), with the dry path aligned ready for lookahead
+5. Character retuning by ear (4.6)
+6. Drive loudness matching, crush anti-aliasing switch (4.6)
+7. Formant module, reusing KloudFormant (4.3)
+8. Varispeed (4.3) — tested against a warped clip before anything is built on it
+9. Space, wow/flutter, noise (4.3)
+10. Transient triggering (4.5)
+11. pluginval, notarisation, first tagged release
+12. Multiband retrofit (4.4), if the module set has settled by then
 
 ---
 
-## Open decisions
+## Still open
 
-1. **Scope of the first usable version.** Ship the five current modules polished,
-   or hold until Reverse + Repeat are in? The current five can make a loop sound
-   *different*; they struggle to make it sound like a *different edit*.
+1. **Character list.** Six is a guess — Subtle, Bounce, Warped, Hazy, Broken,
+   Wildcard. Are these the right six, and should they be named for what they do
+   or for a genre? Adding a character is adding a row to one table, so this is
+   cheap to change until people have saved projects with the indices in them.
 
-2. **Locks now or later.** They change the state format and the panel layout, so
-   doing them after three more modules costs more than doing them now.
-
-3. **Wide or deep.** More modules (Reverse, Repeat, Formant, Space) or multiband
-   on the existing five? Wide is more ideas; deep is more usable on full loops
-   rather than stems. Doing both is roughly twice the work of either.
-
-4. **Mix behaviour.** Keep the parallel dry/wet, or add a wet-solo mode for
-   layering the mangled version underneath the original?
-
-5. **Destructive time modules.** Reverse, Repeat and varispeed change *when*
-   things happen, not just how they sound. They are the strongest tools here and
-   the ones most likely to fight a host's warping. Are they in scope, or is this
-   a "colour and movement" plugin?
-
-6. **Character list.** Six is a guess. Are these the right six, and should they
-   be named for what they do (Bounce, Broken) or for a genre?
-
-7. **Seed range.** 0–9999 is readable and writable-down; it is also only ten
+2. **Seed range.** 0–9999 is readable and writable-down; it is also only ten
    thousand sounds per character. Enough, or should it be wider with the panel
-   showing a short code instead?
+   showing a short alphanumeric code instead?
+
+3. **How locks are saved.** A lock is a workflow state, not a sound — so it
+   probably should not be automatable, and arguably should not travel with a
+   preset either. Saved per instance, or not saved at all?
